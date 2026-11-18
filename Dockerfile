@@ -1,6 +1,12 @@
+
 FROM node:22-alpine
 
 WORKDIR /app
+
+# npm is not required to run this application
+RUN rm -rf /usr/local/lib/node_modules/npm \
+    /usr/local/bin/npm \
+    /usr/local/bin/npx
 
 COPY package.json ./
 COPY app ./app
