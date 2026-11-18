@@ -107,16 +107,30 @@ jobs:
         run: |
           SHA_TAG="${{ steps.tags.outputs.sha_tag }}"
 
+          # Get the digest of the already-pushed commit image
           IMAGE_DIGEST=$(docker buildx imagetools inspect \
             "$IMAGE_NAME:$SHA_TAG" \
             --format '{{json .Manifest.Digest}}' | tr -d '"')
 
           echo "Original image digest: $IMAGE_DIGEST"
 
+          # Promote the existing manifest without creating an image index
           docker buildx imagetools create \
+            --prefer-index=false \
             --tag "$IMAGE_NAME:staging" \
             "$IMAGE_NAME@$IMAGE_DIGEST"
 
-          echo "Staging image promoted successfully"
-          echo "Staging image: $IMAGE_NAME:staging"
-          echo "Promoted digest: $IMAGE_DIGEST"
+          # Verify that staging points to the exact same digest
+          STAGING_DIGEST=$(docker buildx imagetools inspect \
+            "$IMAGE_NAME:staging" \
+            --format '{{json .Manifest.Digest}}' | tr -d '"')
+
+          echo "Original digest: $IMAGE_DIGEST"
+          echo "Staging digest:  $STAGING_DIGEST"
+
+          if [ "$IMAGE_DIGEST" != "$STAGING_DIGEST" ]; then
+            echo "ERROR: Image digest mismatch!"
+            exit 1
+          fi
+
+          echo "SUCCESS: Staging points to the exact same image digest."
