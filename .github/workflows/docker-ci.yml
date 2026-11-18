@@ -101,3 +101,22 @@ jobs:
             docker push "$IMAGE_NAME:$VERSION_TAG"
             docker push "$IMAGE_NAME:latest"
           fi
+
+      - name: Promote same image digest to staging
+        shell: bash
+        run: |
+          SHA_TAG="${{ steps.tags.outputs.sha_tag }}"
+
+          IMAGE_DIGEST=$(docker buildx imagetools inspect \
+            "$IMAGE_NAME:$SHA_TAG" \
+            --format '{{json .Manifest.Digest}}' | tr -d '"')
+
+          echo "Original image digest: $IMAGE_DIGEST"
+
+          docker buildx imagetools create \
+            --tag "$IMAGE_NAME:staging" \
+            "$IMAGE_NAME@$IMAGE_DIGEST"
+
+          echo "Staging image promoted successfully"
+          echo "Staging image: $IMAGE_NAME:staging"
+          echo "Promoted digest: $IMAGE_DIGEST"
