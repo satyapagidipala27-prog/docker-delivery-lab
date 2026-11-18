@@ -1,0 +1,10 @@
+{
+  "name": "docker-delivery-lab",
+  "version": "1.0.0",
+  "description": "Docker Registry and CI/CD learning project",
+  "main": "app/server.js",
+  "scripts": {
+    "start": "node app/server.js",
+    "test": "node --test"
+  }
+}
